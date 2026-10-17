@@ -6,7 +6,6 @@ import {
   ArrowRight,
   CheckCircle2,
   QrCode,
-  TrendingUp,
   Sparkles,
 } from "lucide-react";
 
@@ -17,7 +16,6 @@ export default function VitrineBetuelly() {
       <header className="bg-white text-[#08284B] sticky top-0 z-50 border-b border-gray-200 shadow-sm">
         <div className="max-w-6xl mx-auto px-6 py-3.5 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3.5 group">
-            {/* Símbolo Oficial BETUELLY */}
             <img
               src="/BETUELLY_simbolo.svg"
               alt="Símbolo Betuelly"
@@ -36,14 +34,14 @@ export default function VitrineBetuelly() {
           <div className="flex items-center gap-3">
             <Link
               href="/painel"
-              className="hidden sm:inline-block text-xs md:text-sm text-[#08284B] font-semibold hover:bg-gray-100 px-4 py-2.5 rounded-xl transition"
+              className="hidden sm:inline-block text-xs md:text-sm text-[#08284B] font-semibold hover:bg-gray-100 px-4 py-2.5 rounded-xl transition whitespace-nowrap"
             >
               Ver Painel Demo
             </Link>
             <a
               href="https://wa.me/5531999999999?text=Ol%C3%A1%20Alberto,%20quero%20conhecer%20o%20Piloto%20Betuelly%20Pulse"
               target="_blank"
-              className="text-xs md:text-sm bg-[#08284B] hover:bg-[#0d3562] text-white font-bold px-5 py-2.5 rounded-xl transition shadow-sm flex items-center gap-2"
+              className="text-xs md:text-sm bg-[#08284B] hover:bg-[#0d3562] text-white font-bold px-5 py-2.5 rounded-xl transition shadow-sm flex items-center gap-2 whitespace-nowrap"
             >
               <span className="w-2 h-2 rounded-full bg-[#00B8C4]"></span>
               Agendar Diagnóstico
@@ -55,7 +53,7 @@ export default function VitrineBetuelly() {
       {/* PRIMEIRA DOBRA (HERO) COM A FOTO DA PADARIA CHEIA */}
       <section className="bg-[#08284B] text-white py-14 md:py-20 px-6 relative overflow-hidden">
         <div className="max-w-6xl mx-auto grid lg:grid-cols-12 gap-10 items-center">
-          {/* Coluna de Texto (7 colunas) */}
+          {/* Coluna de Texto (6 colunas) */}
           <div className="lg:col-span-6">
             <span className="inline-flex items-center gap-1.5 bg-[#00B8C4]/20 border border-[#00B8C4]/40 text-[#00B8C4] text-xs font-bold px-3.5 py-1.5 rounded-full mb-5">
               <Sparkles size={14} /> ESPECIALISTA EM PADARIAS & COMÉRCIO LOCAL — GRANDE BH
@@ -69,19 +67,21 @@ export default function VitrineBetuelly() {
             <p className="text-gray-300 text-base md:text-lg mb-8 leading-relaxed">
               Transforme o movimento anônimo do seu balcão em clientes identificados, dispare avisos de <strong>Fornada Quente</strong> para zerar sobras de vitrine e receba <strong>Encomendas de Festas</strong> no automático pelo WhatsApp.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4">
+
+            {/* BOTÕES POLIDOS EM UMA ÚNICA LINHA (SEM QUEBRAR TEXTO) */}
+            <div className="flex flex-col sm:flex-row gap-3.5">
               <a
                 href="https://wa.me/5531999999999?text=Ol%C3%A1%20Alberto,%20quero%20participar%20do%20Projeto%20Piloto%20Betuelly"
                 target="_blank"
-                className="bg-[#00B8C4] hover:bg-[#00a3ad] text-[#08284B] font-extrabold px-6 py-4 rounded-xl flex items-center justify-center gap-2 text-base shadow-lg transition"
+                className="bg-[#00B8C4] hover:bg-[#00a3ad] text-[#08284B] font-extrabold px-6 py-4 rounded-xl flex items-center justify-center gap-2 text-sm md:text-base shadow-lg transition whitespace-nowrap"
               >
-                Participar do Projeto Piloto <ArrowRight size={18} />
+                Participar do Projeto Piloto <ArrowRight size={18} className="shrink-0" />
               </a>
               <Link
                 href="/ponto"
-                className="border border-white/30 hover:bg-white/10 text-white font-semibold px-6 py-4 rounded-xl flex items-center justify-center gap-2 text-base transition"
+                className="border border-white/30 hover:bg-white/10 text-white font-semibold px-6 py-4 rounded-xl flex items-center justify-center gap-2 text-sm md:text-base transition whitespace-nowrap"
               >
-                Simular "Bate-Ponto" Ao Vivo
+                Simular &quot;Bate-Ponto&quot; Ao Vivo
               </Link>
             </div>
           </div>
@@ -95,9 +95,9 @@ export default function VitrineBetuelly() {
                 className="w-full h-[340px] md:h-[420px] object-cover"
               />
               {/* Badge Flutuante sobre a Foto */}
-              <div className="absolute bottom-4 left-4 right-4 bg-[#08284B]/95 backdrop-blur-md border border-white/15 p-4 rounded-2xl flex items-center justify-between">
+              <div className="absolute bottom-4 left-4 right-4 bg-[#08284B]/95 backdrop-blur-md border border-white/15 p-4 rounded-2xl flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="bg-white p-1.5 rounded-xl">
+                  <div className="bg-white p-1.5 rounded-xl shrink-0">
                     <img
                       src="/BETUELLY_simbolo.svg"
                       alt="Betuelly Pulse"
@@ -115,7 +115,7 @@ export default function VitrineBetuelly() {
                 </div>
                 <Link
                   href="/painel"
-                  className="bg-[#00B8C4] text-[#08284B] text-xs font-extrabold px-3 py-2 rounded-lg shrink-0 hover:opacity-90"
+                  className="bg-[#00B8C4] text-[#08284B] text-xs font-extrabold px-3.5 py-2.5 rounded-lg shrink-0 hover:opacity-90 whitespace-nowrap"
                 >
                   Ver Painel →
                 </Link>
@@ -125,7 +125,7 @@ export default function VitrineBetuelly() {
         </div>
       </section>
 
-      {/* NOVA SEÇÃO: COMO FUNCIONA NO CAIXA (COM A FOTO DO SCANNER QR) */}
+      {/* SEÇÃO: COMO FUNCIONA NO CAIXA (COM A FOTO DO SCANNER QR) */}
       <section className="py-16 md:py-24 px-6 max-w-6xl mx-auto">
         <div className="grid md:grid-cols-2 gap-12 items-center bg-white p-6 md:p-10 rounded-3xl shadow-sm border border-gray-200">
           <div className="rounded-2xl overflow-hidden border border-gray-200 shadow-md">
@@ -171,13 +171,13 @@ export default function VitrineBetuelly() {
             <div className="flex flex-wrap gap-3">
               <Link
                 href="/ponto"
-                className="bg-[#08284B] hover:bg-[#0d3562] text-white font-bold px-5 py-3 rounded-xl text-sm flex items-center gap-2"
+                className="bg-[#08284B] hover:bg-[#0d3562] text-white font-bold px-5 py-3 rounded-xl text-sm flex items-center gap-2 whitespace-nowrap"
               >
                 Testar Simulador do Caixa <ArrowRight size={16} />
               </Link>
               <Link
                 href="/painel"
-                className="border border-[#08284B] text-[#08284B] hover:bg-gray-50 font-bold px-5 py-3 rounded-xl text-sm"
+                className="border border-[#08284B] text-[#08284B] hover:bg-gray-50 font-bold px-5 py-3 rounded-xl text-sm whitespace-nowrap"
               >
                 Ver Painel de Clientes Sumidos
               </Link>
@@ -198,14 +198,13 @@ export default function VitrineBetuelly() {
         </div>
 
         <div className="grid md:grid-cols-3 gap-8">
-          {/* Pilar 1 */}
           <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-200 flex flex-col justify-between">
             <div>
               <div className="w-12 h-12 rounded-xl bg-[#08284B] text-[#00B8C4] flex items-center justify-center mb-6">
                 <Users size={24} />
               </div>
               <h3 className="text-xl font-bold text-[#08284B] mb-3">
-                1. Clube "Bate-Ponto" & Resgate de Sumidos
+                1. Clube &quot;Bate-Ponto&quot; & Resgate de Sumidos
               </h3>
               <p className="text-gray-600 text-sm leading-relaxed mb-6">
                 Identifique quem frequenta o seu balcão, descubra a frequência real de cada cliente e dispare campanhas automáticas de resgate quando ele deixar de ir.
@@ -219,7 +218,6 @@ export default function VitrineBetuelly() {
             </Link>
           </div>
 
-          {/* Pilar 2 */}
           <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-200 flex flex-col justify-between">
             <div>
               <div className="w-12 h-12 rounded-xl bg-[#08284B] text-[#00B8C4] flex items-center justify-center mb-6">
@@ -240,7 +238,6 @@ export default function VitrineBetuelly() {
             </Link>
           </div>
 
-          {/* Pilar 3 */}
           <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-200 flex flex-col justify-between">
             <div>
               <div className="w-12 h-12 rounded-xl bg-[#08284B] text-[#00B8C4] flex items-center justify-center mb-6">
@@ -318,7 +315,7 @@ export default function VitrineBetuelly() {
               </li>
             </ul>
             <a
-              href="https://wa.me/5531995172722"
+              href="https://wa.me/5531999999999"
               target="_blank"
               className="block w-full text-center bg-[#00B8C4] hover:bg-[#00a3ad] text-[#08284B] font-extrabold py-3.5 rounded-xl text-sm transition"
             >
@@ -328,7 +325,7 @@ export default function VitrineBetuelly() {
         </div>
       </section>
 
-      {/* RODAPÉ OFICIAL */}
+      {/* RODAPÉ OFICIAL (COM DATA FIXA 2026 SEM ERRO NO NEXT.JS) */}
       <footer className="bg-[#08284B] text-white py-10 px-6 border-t border-white/10">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-3">
@@ -349,7 +346,7 @@ export default function VitrineBetuelly() {
             </div>
           </div>
           <p className="text-xs text-gray-400">
-            © {new Date().getFullYear()} Betuelly Tecnologia • Grande Belo Horizonte, MG
+            © 2026 Betuelly Tecnologia • Belo Horizonte, MG
           </p>
         </div>
       </footer>
