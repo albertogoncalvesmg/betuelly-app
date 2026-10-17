@@ -39,7 +39,7 @@ export default function VitrineBetuelly() {
               Ver Painel Demo
             </Link>
             <a
-              href="https://wa.me/5531999999999?text=Ol%C3%A1%20Alberto,%20quero%20conhecer%20o%20Piloto%20Betuelly%20Pulse"
+              href="https://wa.me/5531995172722?text=Ol%C3%A1%20Alberto,%20quero%20conhecer%20o%20Piloto%20Betuelly%20Pulse"
               target="_blank"
               className="text-xs md:text-sm bg-[#08284B] hover:bg-[#0d3562] text-white font-bold px-5 py-2.5 rounded-xl transition shadow-sm flex items-center gap-2 whitespace-nowrap"
             >
@@ -56,7 +56,7 @@ export default function VitrineBetuelly() {
           {/* Coluna de Texto (6 colunas) */}
           <div className="lg:col-span-6">
             <span className="inline-flex items-center gap-1.5 bg-[#00B8C4]/20 border border-[#00B8C4]/40 text-[#00B8C4] text-xs font-bold px-3.5 py-1.5 rounded-full mb-5">
-              <Sparkles size={14} /> ESPECIALISTA EM PADARIAS & COMÉRCIO LOCAL — GRANDE BH
+              <Sparkles size={14} /> ESPECIALISTA EM PADARIAS & COMÉRCIO LOCAL
             </span>
             <h1 className="text-3xl md:text-5xl font-extrabold leading-tight mb-6">
               Sua vitrine cheia faz o cliente entrar.{" "}
