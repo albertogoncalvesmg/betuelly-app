@@ -41,7 +41,7 @@ export default function TelaBatePonto() {
 
       if (!clienteExistente) {
         // Se não existe, cria o cliente
-        const { data: novoCliente, err } = await supabase
+        const { data: novoCliente, error } = await supabase
           .from("clientes")
           .insert([
             {
