@@ -1,12 +1,14 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { CheckCircle2, Gift, ArrowLeft, Delete, QrCode, Smartphone } from "lucide-react";
-
+import { CheckCircle2, Gift, ArrowLeft, Delete, QrCode, Smartphone, Loader2 } from "lucide-react";
+import { supabase } from "./supabase";
 export default function TelaBatePonto() {
   const [telefone, setTelefone] = useState("");
   const [modo, setModo] = useState<"scanner" | "teclado">("scanner");
   const [confirmado, setConfirmado] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [totalVisitas, setTotalVisitas] = useState(1);
 
   const adicionarDigito = (digito: string) => {
     if (telefone.length < 11) setTelefone((prev) => prev + digito);
@@ -16,17 +18,87 @@ export default function TelaBatePonto() {
     setTelefone((prev) => prev.slice(0, -1));
   };
 
-  const registrarPonto = () => {
-    setConfirmado(true);
-    setTimeout(() => {
-      setConfirmado(false);
-      setTelefone("");
-    }, 4500);
+  // FUNÇÃO QUE GRAVA DE VERDADE NO SUPABASE
+  const registrarPonto = async (telOverride?: string) => {
+    const numeroParaSalvar = telOverride || telefone;
+    if (numeroParaSalvar.length < 10) return;
+
+    setLoading(true);
+
+    try {
+      // 1. ID fixo da Padaria Piloto (para teste inicial)
+      // No futuro, cada padaria terá o seu UUID próprio na URL ou sessão
+      const padariaIdExemplo = "00000000-0000-0000-0000-000000000001";
+
+      // 2. Verifica se o cliente já existe ou insere um novo
+      let { data: clienteExistente } = await supabase
+        .from("clientes")
+        .select("*")
+        .eq("telefone", numeroParaSalvar)
+        .maybeSingle();
+
+      let clienteId;
+
+      if (!clienteExistente) {
+        // Se não existe, cria o cliente
+        const { data: novoCliente, err } = await supabase
+          .from("clientes")
+          .insert([
+            {
+              padaria_id: padariaIdExemplo,
+              telefone: numeroParaSalvar,
+              total_visitas: 1,
+              ultima_visita_em: new Date(),
+            },
+          ])
+          .select()
+          .single();
+
+        if (err) throw err;
+        clienteId = novoCliente.id;
+        setTotalVisitas(1);
+      } else {
+        // Se já existe, atualiza as visitas
+        clienteId = clienteExistente.id;
+        const novasVisitas = (clienteExistente.total_visitas || 0) + 1;
+        
+        await supabase
+          .from("clientes")
+          .update({
+            total_visitas: novasVisitas,
+            ultima_visita_em: new Date(),
+          })
+          .eq("id", clienteId);
+
+        setTotalVisitas(novasVisitas);
+      }
+
+      // 3. Regista a visita na tabela de "visitas" (Check-in)
+      await supabase.from("visitas").insert([
+        {
+          padaria_id: padariaIdExemplo,
+          cliente_id: clienteId,
+          turno: new Date().getHours() < 12 ? "MANHA" : "TARDE",
+        },
+      ]);
+
+      setConfirmado(true);
+      setTimeout(() => {
+        setConfirmado(false);
+        setTelefone("");
+        setLoading(false);
+      }, 4500);
+
+    } catch (error) {
+      console.error("Erro ao registar ponto:", error);
+      alert("Erro ao registar presença. Verifique a consola.");
+      setLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-[#08284B] text-white flex flex-col justify-between p-6 select-none">
-      {/* Topo com Símbolo Oficial Betuelly */}
+      {/* Topo */}
       <div className="max-w-4xl w-full mx-auto flex items-center justify-between">
         <Link
           href="/"
@@ -48,13 +120,13 @@ export default function TelaBatePonto() {
               BETUELLY PULSE
             </span>
             <span className="text-[10px] text-[#00B8C4] font-semibold">
-              TERMINAL DO BALCÃO
+              TERMINAL DO BALCÃO (DB ATIVO)
             </span>
           </div>
         </div>
       </div>
 
-      {/* Centro: Leitor QR Code ou Teclado */}
+      {/* Centro */}
       <div className="max-w-md w-full mx-auto my-6 bg-[#0d3562] border border-white/15 rounded-3xl p-6 shadow-2xl text-center">
         {!confirmado ? (
           <>
@@ -77,7 +149,7 @@ export default function TelaBatePonto() {
               A cada <strong>5 visitas</strong>, ganhe 1 Café Expresso + Porção de Pão de Queijo.
             </p>
 
-            {/* Seletor de Modo: Scanner vs Teclado */}
+            {/* Seletor de Modo */}
             <div className="grid grid-cols-2 gap-2 bg-[#08284B] p-1.5 rounded-2xl mb-5 border border-white/10">
               <button
                 onClick={() => setModo("scanner")}
@@ -104,24 +176,24 @@ export default function TelaBatePonto() {
             {modo === "scanner" ? (
               <div className="py-4">
                 <div
-                  onClick={registrarPonto}
+                  onClick={() => !loading && registrarPonto("31999887766")}
                   className="cursor-pointer group relative w-52 h-52 mx-auto rounded-3xl bg-[#08284B] border-2 border-dashed border-[#00B8C4] flex flex-col items-center justify-center p-6 hover:bg-[#08284B]/80 transition"
                 >
-                  <QrCode
-                    size={72}
-                    className="text-[#00B8C4] mb-3 group-hover:scale-110 transition-transform"
-                  />
+                  {loading ? (
+                    <Loader2 size={48} className="text-[#00B8C4] animate-spin mb-2" />
+                  ) : (
+                    <QrCode size={64} className="text-[#00B8C4] mb-3 group-hover:scale-110 transition-transform" />
+                  )}
                   <span className="text-xs font-bold text-white">
-                    Aproxime o QR Code do seu Clube Betuelly
+                    {loading ? "A gravar no Supabase..." : "Aproxime o QR Code do seu Clube"}
                   </span>
                   <span className="text-[11px] text-[#00B8C4] mt-1">
-                    (Toque aqui para simular a leitura em 1s)
+                    (Toque para simular leitura em 1s)
                   </span>
                 </div>
               </div>
             ) : (
               <>
-                {/* Visor do Número */}
                 <div className="bg-[#08284B] border-2 border-[#00B8C4] rounded-2xl py-3 px-4 mb-4 text-2xl font-mono tracking-widest h-14 flex items-center justify-center">
                   {telefone || (
                     <span className="text-gray-400 text-base">
@@ -130,7 +202,6 @@ export default function TelaBatePonto() {
                   )}
                 </div>
 
-                {/* Teclado Numérico Rápido */}
                 <div className="grid grid-cols-3 gap-2.5 mb-4">
                   {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((num) => (
                     <button
@@ -162,11 +233,12 @@ export default function TelaBatePonto() {
                 </div>
 
                 <button
-                  onClick={registrarPonto}
-                  disabled={telefone.length < 10}
-                  className="w-full bg-[#00B8C4] disabled:opacity-40 text-[#08284B] font-extrabold text-base py-4 rounded-xl shadow-lg transition"
+                  onClick={() => registrarPonto()}
+                  disabled={telefone.length < 10 || loading}
+                  className="w-full bg-[#00B8C4] disabled:opacity-40 text-[#08284B] font-extrabold text-base py-4 rounded-xl shadow-lg transition flex items-center justify-center gap-2"
                 >
-                  REGISTRAR MINHA VISITA
+                  {loading && <Loader2 size={18} className="animate-spin" />}
+                  {loading ? "A GRAVAR NO SERVIDOR..." : "REGISTRAR MINHA VISITA"}
                 </button>
               </>
             )}
@@ -178,21 +250,21 @@ export default function TelaBatePonto() {
               className="text-[#00B8C4] mx-auto mb-4 animate-bounce"
             />
             <h2 className="text-2xl font-extrabold mb-2">
-              Ponto Registrado em 1 Segundo!
+              Ponto Registrado com Sucesso!
             </h2>
             <p className="text-gray-200 text-sm mb-6">
-              Comprovante enviado no seu WhatsApp. Você completou{" "}
-              <strong>4 de 5 visitas</strong>! Na próxima visita seu Café + Pão de Queijo é por nossa conta.
+              Dados guardados na nuvem do Supabase. Este cliente tem agora{" "}
+              <strong>{totalVisitas} de 5 visitas</strong> registadas!
             </p>
             <div className="bg-[#08284B] p-3.5 rounded-xl text-xs text-[#00B8C4] font-semibold">
-              Liberando leitor para o próximo cliente da fila...
+              Terminal pronto para o próximo cliente...
             </div>
           </div>
         )}
       </div>
 
       <p className="text-center text-[11px] text-gray-400">
-        Ambiente seguro • Adequado à LGPD • Betuelly Tecnologia
+        Ambiente seguro • Supabase Conectado • Betuelly Tecnologia
       </p>
     </div>
   );
