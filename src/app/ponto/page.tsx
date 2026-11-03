@@ -54,7 +54,7 @@ export default function TelaBatePonto() {
           .select()
           .single();
 
-        if (err) throw err;
+        if (error) throw error;
         clienteId = novoCliente.id;
         setTotalVisitas(1);
       } else {
