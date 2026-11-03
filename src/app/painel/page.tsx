@@ -21,6 +21,10 @@ import {
   Crown,
   BarChart3,
   Send,
+  QrCode,
+  Printer,
+  Smartphone,
+  ExternalLink,
 } from "lucide-react";
 import { supabase } from "../ponto/supabase";
 
@@ -50,8 +54,12 @@ export default function PainelGestao() {
     "1 Café Expresso + Pão de Queijo"
   );
 
+  // Navegação entre os 3 módulos do Painel
+  const [abaAtiva, setAbaAtiva] = useState<
+    "marketing" | "qrcode" | "clientes"
+  >("marketing");
+
   // Estados do Estúdio de Marketing (Canal do WhatsApp)
-  const [abaAtiva, setAbaAtiva] = useState<"clientes" | "marketing">("marketing");
   const [tipoCampanha, setTipoCampanha] =
     useState<TipoCampanhaCanal>("lancamento");
   const [produtoInput, setProdutoInput] = useState(
@@ -63,6 +71,21 @@ export default function PainelGestao() {
     "Apenas 20 unidades hoje até às 18h"
   );
   const [copiado, setCopiado] = useState(false);
+
+  // Estados do Gerador de Placa QR Code de Balcão
+  const [linkCanalInput, setLinkCanalInput] = useState(
+    "https://whatsapp.com/channel/0029VaExemploBetuelly"
+  );
+  const [usarWhatsappDireto, setUsarWhatsappDireto] = useState(true);
+  const [tituloPlacaInput, setTituloPlacaInput] = useState(
+    "ENTRE NO NOSSO CANAL VIP!"
+  );
+  const [subtituloPlacaInput, setSubtituloPlacaInput] = useState(
+    "Receba avisos de Fornada Quente e Ofertas Relâmpago com até 30% de desconto direto no seu WhatsApp."
+  );
+  const [iscaBalcaoInput, setIscaBalcaoInput] = useState(
+    "Mostre no caixa que entrou no Canal hoje e ganhe 1 Pão de Queijo quentinho na hora!"
+  );
 
   const carregarDados = async () => {
     setLoading(true);
@@ -196,7 +219,6 @@ export default function PainelGestao() {
       return `👑 *SENHA SECRETA DOS MEMBROS DO CANAL!* 🤫\n\nQuem faz parte do Canal Oficial da *${nomePadaria}* tem privilégios que mais ninguém tem.\n\nHoje, o nosso *${produtoInput}* sai de ~${precoNormalInput}~ por *${precoPromoInput}* exclusivamente para vocês!\n\n🔑 *Como resgatar:* Passe na padaria (${escassezInput}) e diga no caixa a senha *"SOU VIP DO CANAL"* ou clique abaixo para deixar separado:\n${linkReservaDireta}`;
     }
 
-    // Enquete de Engajamento
     return `📊 *VOCÊ DECIDE A PRÓXIMA FORNADA COM DESCONTO!* 🔥\n\nDaqui a pouco sai fornada especial na *${nomePadaria}* com preço promocional de *${precoPromoInput}*, mas queremos saber o que vocês estão com mais vontade de comer hoje!\n\nVote reagindo a esta mensagem:\n❤️ = *${produtoInput}*\n🔥 = *Pão de Queijo Recheado + Café Expresso*\n\nA opção mais votada até às 15h entra em promoção relâmpago aqui no Canal! Vote agora 👇`;
   };
 
@@ -258,6 +280,27 @@ export default function PainelGestao() {
     }
   };
 
+  // URL final codificada no QR Code de Balcão
+  const obterUrlDestinoQrCode = () => {
+    if (usarWhatsappDireto) {
+      const numLimpo = whatsappPadaria.replace(/\D/g, "");
+      const ddi = numLimpo.startsWith("55") ? numLimpo : `55${numLimpo}`;
+      const msg = encodeURIComponent(
+        `Olá! Estou aqui no balcão da ${nomePadaria} e quero entrar na Lista/Canal VIP para receber as fornadas quentes e garantir meu brinde de boas-vindas!`
+      );
+      return `https://wa.me/${ddi}?text=${msg}`;
+    }
+    return linkCanalInput || "https://whatsapp.com";
+  };
+
+  const urlImagemQrCode = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&margin=10&color=08284B&data=${encodeURIComponent(
+    obterUrlDestinoQrCode()
+  )}`;
+
+  const imprimirPlaca = () => {
+    window.print();
+  };
+
   // Métricas resumidas
   const totalClientes = clientes.length;
   const totalVisitasSomadas = clientes.reduce(
@@ -272,9 +315,9 @@ export default function PainelGestao() {
   ).length;
 
   return (
-    <div className="min-h-screen bg-[#F7F8FA] text-[#1E242B] p-6">
-      {/* Cabeçalho */}
-      <div className="max-w-6xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
+    <div className="min-h-screen bg-[#F7F8FA] text-[#1E242B] p-6 print:bg-white print:p-0">
+      {/* Cabeçalho (Oculto na impressão) */}
+      <div className="max-w-6xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 bg-white p-5 rounded-2xl shadow-sm border border-gray-200 print:hidden">
         <div className="flex items-center gap-3">
           <div className="bg-[#08284B] p-2.5 rounded-xl">
             <img
@@ -316,8 +359,8 @@ export default function PainelGestao() {
         </div>
       </div>
 
-      {/* Cartões de Indicadores (KPIs) */}
-      <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      {/* Cartões de Indicadores - KPIs (Ocultos na impressão) */}
+      <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 print:hidden">
         <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm">
           <div className="flex items-center justify-between text-gray-500 text-xs font-bold mb-2">
             <span>CLIENTES CADASTRADOS</span>
@@ -371,8 +414,8 @@ export default function PainelGestao() {
         </div>
       </div>
 
-      {/* Seletor de Módulos do Painel */}
-      <div className="max-w-6xl mx-auto flex flex-wrap gap-3 mb-6">
+      {/* Seletor de Módulos do Painel (Oculto na impressão) */}
+      <div className="max-w-6xl mx-auto flex flex-wrap gap-3 mb-6 print:hidden">
         <button
           onClick={() => setAbaAtiva("marketing")}
           className={`flex items-center gap-2 px-5 py-3 rounded-xl text-xs font-extrabold transition shadow-sm ${
@@ -382,7 +425,19 @@ export default function PainelGestao() {
           }`}
         >
           <Megaphone size={16} className="text-[#00B8C4]" />
-          Estúdio de Marketing (Canal do WhatsApp & Promoções)
+          1. Estúdio de Marketing (Canal do WhatsApp)
+        </button>
+
+        <button
+          onClick={() => setAbaAtiva("qrcode")}
+          className={`flex items-center gap-2 px-5 py-3 rounded-xl text-xs font-extrabold transition shadow-sm ${
+            abaAtiva === "qrcode"
+              ? "bg-[#08284B] text-white"
+              : "bg-white text-[#08284B] border border-gray-200 hover:bg-gray-50"
+          }`}
+        >
+          <QrCode size={16} className="text-[#00B8C4]" />
+          2. Placa QR Code de Balcão (Captar Seguidores)
         </button>
 
         <button
@@ -394,14 +449,13 @@ export default function PainelGestao() {
           }`}
         >
           <Users size={16} className="text-[#00B8C4]" />
-          Base de Clientes & Disparos 1-a-1 ({totalClientes})
+          3. Base de Clientes & Disparos 1-a-1 ({totalClientes})
         </button>
       </div>
 
       {/* MÓDULO 1: ESTÚDIO DE MARKETING PARA CANAL DO WHATSAPP */}
       {abaAtiva === "marketing" && (
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
-          {/* Coluna Esquerda: Gatilhos e Personalização */}
           <div className="lg:col-span-7 bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
             <div className="mb-5">
               <span className="text-[11px] font-bold uppercase tracking-wider text-[#00B8C4]">
@@ -415,7 +469,6 @@ export default function PainelGestao() {
               </p>
             </div>
 
-            {/* Botões de Gatilhos */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-6">
               <button
                 onClick={() => selecionarPredefinicao("lancamento")}
@@ -522,7 +575,6 @@ export default function PainelGestao() {
               </button>
             </div>
 
-            {/* Campos de Personalização */}
             <div className="space-y-4 pt-4 border-t border-gray-100">
               <span className="text-[11px] font-bold uppercase tracking-wider text-[#00B8C4] block">
                 PASSO 2 • PERSONALIZE OS DADOS DO PRODUTO
@@ -537,7 +589,6 @@ export default function PainelGestao() {
                   value={produtoInput}
                   onChange={(e) => setProdutoInput(e.target.value)}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:border-[#00B8C4]"
-                  placeholder="Ex: Pão de Queijo Recheado com Catupiry"
                 />
               </div>
 
@@ -551,7 +602,6 @@ export default function PainelGestao() {
                     value={precoNormalInput}
                     onChange={(e) => setPrecoNormalInput(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:border-[#00B8C4]"
-                    placeholder="Ex: R$ 18,00"
                   />
                 </div>
 
@@ -564,7 +614,6 @@ export default function PainelGestao() {
                     value={precoPromoInput}
                     onChange={(e) => setPrecoPromoInput(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm font-bold text-emerald-700 focus:outline-none focus:border-[#00B8C4]"
-                    placeholder="Ex: R$ 12,90"
                   />
                 </div>
               </div>
@@ -578,13 +627,11 @@ export default function PainelGestao() {
                   value={escassezInput}
                   onChange={(e) => setEscassezInput(e.target.value)}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:border-[#00B8C4]"
-                  placeholder="Ex: Apenas 15 unidades ou até às 18h"
                 />
               </div>
             </div>
           </div>
 
-          {/* Coluna Direita: Simulador do Canal do WhatsApp e Disparo */}
           <div className="lg:col-span-5 flex flex-col justify-between bg-[#08284B] text-white rounded-2xl p-6 shadow-sm">
             <div>
               <div className="flex items-center justify-between mb-4">
@@ -596,12 +643,10 @@ export default function PainelGestao() {
                 </span>
               </div>
 
-              {/* Balão simulando o Canal do WhatsApp */}
               <div className="bg-[#0b141a] text-gray-100 p-4 rounded-2xl border border-white/10 text-xs leading-relaxed whitespace-pre-wrap font-sans shadow-inner mb-4">
                 {gerarTextoCanal()}
               </div>
 
-              {/* Dica de Fotografia para o Padeiro */}
               <div className="bg-white/10 border border-white/15 rounded-xl p-3.5 mb-6 flex items-start gap-3">
                 <Camera size={18} className="text-[#00B8C4] shrink-0 mt-0.5" />
                 <div>
@@ -615,7 +660,6 @@ export default function PainelGestao() {
               </div>
             </div>
 
-            {/* Botões de Ação para o Canal */}
             <div className="space-y-2.5">
               <button
                 onClick={copiarAnuncio}
@@ -643,9 +687,199 @@ export default function PainelGestao() {
         </div>
       )}
 
-      {/* MÓDULO 2: TABELA DE CLIENTES E DISPAROS 1-A-1 */}
+      {/* MÓDULO 2: GERADOR DE PLACA QR CODE DE BALCÃO (CAPTAÇÃO VIP) */}
+      {abaAtiva === "qrcode" && (
+        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8 items-start">
+          {/* Coluna Esquerda: Configurações da Placa (Oculta na impressão) */}
+          <div className="lg:col-span-6 bg-white rounded-2xl border border-gray-200 shadow-sm p-6 print:hidden">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[#00B8C4]">
+              CAPTAÇÃO NO CAIXA • DISPLAY DE ACRÍLICO / BALCÃO
+            </span>
+            <h2 className="text-lg font-extrabold text-[#08284B] mt-0.5">
+              Configurar Placa QR Code do Canal VIP
+            </h2>
+            <p className="text-xs text-gray-500 mt-1 mb-5">
+              Personalize a placa abaixo e clique em imprimir. Quando o cliente aponta a câmara do telemóvel na fila do caixa, entra diretamente no seu Canal VIP ou envia mensagem para receber alertas de fornada.
+            </p>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-[#08284B] mb-2">
+                  Para onde o QR Code deve levar o cliente?
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setUsarWhatsappDireto(true)}
+                    className={`p-3 rounded-xl border text-left text-xs transition ${
+                      usarWhatsappDireto
+                        ? "border-[#00B8C4] bg-[#00B8C4]/10 font-extrabold text-[#08284B]"
+                        : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                    }`}
+                  >
+                    📲 WhatsApp da Padaria
+                    <span className="block text-[10px] font-normal text-gray-500 mt-0.5">
+                      Abre conversa com pedido de entrada VIP
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setUsarWhatsappDireto(false)}
+                    className={`p-3 rounded-xl border text-left text-xs transition ${
+                      !usarWhatsappDireto
+                        ? "border-[#00B8C4] bg-[#00B8C4]/10 font-extrabold text-[#08284B]"
+                        : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                    }`}
+                  >
+                    📢 Link Direto do Canal
+                    <span className="block text-[10px] font-normal text-gray-500 mt-0.5">
+                      Usa o link público do Canal do WhatsApp
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              {!usarWhatsappDireto && (
+                <div>
+                  <label className="block text-xs font-bold text-[#08284B] mb-1">
+                    Cole aqui o Link do seu Canal do WhatsApp
+                  </label>
+                  <input
+                    type="text"
+                    value={linkCanalInput}
+                    onChange={(e) => setLinkCanalInput(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:border-[#00B8C4]"
+                    placeholder="https://whatsapp.com/channel/..."
+                  />
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-bold text-[#08284B] mb-1">
+                  Título Principal da Placa
+                </label>
+                <input
+                  type="text"
+                  value={tituloPlacaInput}
+                  onChange={(e) => setTituloPlacaInput(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm font-bold focus:outline-none focus:border-[#00B8C4]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-[#08284B] mb-1">
+                  Subtítulo Explicativo
+                </label>
+                <textarea
+                  rows={2}
+                  value={subtituloPlacaInput}
+                  onChange={(e) => setSubtituloPlacaInput(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl border border-gray-300 text-sm focus:outline-none focus:border-[#00B8C4]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-[#08284B] mb-1">
+                  🎁 Isca de Balcão (Recompensa Imediata no Caixa)
+                </label>
+                <input
+                  type="text"
+                  value={iscaBalcaoInput}
+                  onChange={(e) => setIscaBalcaoInput(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-amber-300 bg-amber-50/40 text-sm font-semibold text-[#08284B] focus:outline-none focus:border-[#00B8C4]"
+                />
+              </div>
+
+              <div className="pt-3 flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={imprimirPlaca}
+                  className="flex-1 bg-[#08284B] hover:bg-[#0d3868] text-white py-3.5 px-5 rounded-xl text-xs font-extrabold transition flex items-center justify-center gap-2 shadow-sm"
+                >
+                  <Printer size={16} className="text-[#00B8C4]" />
+                  Imprimir Placa de Balcão (A4 / A5)
+                </button>
+
+                <a
+                  href={obterUrlDestinoQrCode()}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="bg-gray-100 hover:bg-gray-200 text-[#08284B] py-3.5 px-4 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5"
+                >
+                  <ExternalLink size={15} /> Testar Link
+                </a>
+              </div>
+            </div>
+          </div>
+
+          {/* Coluna Direita: Placa Pronta para Impressão */}
+          <div className="lg:col-span-6 flex justify-center print:col-span-12">
+            <div className="w-full max-w-md bg-[#08284B] text-white rounded-3xl p-8 shadow-xl border-4 border-[#00B8C4] text-center relative overflow-hidden print:shadow-none print:mt-6">
+              {/* Topo Institucional */}
+              <div className="inline-flex items-center gap-2 bg-[#00B8C4]/20 border border-[#00B8C4]/40 text-[#00B8C4] px-4 py-1.5 rounded-full text-[11px] font-extrabold uppercase tracking-widest mb-4">
+                <Sparkles size={13} /> {nomePadaria}
+              </div>
+
+              <h3 className="text-2xl font-black tracking-tight text-white mb-2 uppercase">
+                {tituloPlacaInput}
+              </h3>
+
+              <p className="text-xs text-gray-200 leading-relaxed max-w-sm mx-auto mb-6">
+                {subtituloPlacaInput}
+              </p>
+
+              {/* Moldura do QR Code */}
+              <div className="bg-white p-5 rounded-2xl inline-block shadow-lg border-4 border-[#00B8C4] mb-5">
+                <img
+                  src={urlImagemQrCode}
+                  alt="QR Code Canal VIP"
+                  className="w-52 h-52 object-contain mx-auto"
+                />
+                <span className="block text-[11px] font-extrabold text-[#08284B] uppercase tracking-wider mt-2">
+                  Aponte a câmara do telemóvel
+                </span>
+              </div>
+
+              {/* Passo a Passo Rápido */}
+              <div className="grid grid-cols-3 gap-2 text-left bg-white/10 rounded-xl p-3 mb-5 border border-white/10 text-[11px]">
+                <div className="flex items-center gap-1.5">
+                  <span className="bg-[#00B8C4] text-[#08284B] font-black w-5 h-5 rounded-full flex items-center justify-center shrink-0">
+                    1
+                  </span>
+                  <span>Abra a câmara</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="bg-[#00B8C4] text-[#08284B] font-black w-5 h-5 rounded-full flex items-center justify-center shrink-0">
+                    2
+                  </span>
+                  <span>Leia o QR Code</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="bg-[#00B8C4] text-[#08284B] font-black w-5 h-5 rounded-full flex items-center justify-center shrink-0">
+                    3
+                  </span>
+                  <span>Entre no VIP!</span>
+                </div>
+              </div>
+
+              {/* Destaque da Isca de Balcão */}
+              <div className="bg-amber-400 text-[#08284B] p-3.5 rounded-2xl font-extrabold text-xs shadow-md flex items-center justify-center gap-2">
+                <Gift size={18} className="shrink-0" />
+                <span>{iscaBalcaoInput}</span>
+              </div>
+
+              <div className="mt-5 pt-3 border-t border-white/10 flex items-center justify-center gap-1.5 text-[10px] text-gray-300">
+                <Smartphone size={12} className="text-[#00B8C4]" />
+                <span>Tecnologia Betuelly Pulse • Fidelização & Recorrência</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MÓDULO 3: TABELA DE CLIENTES E DISPAROS 1-A-1 */}
       {abaAtiva === "clientes" && (
-        <div className="max-w-6xl mx-auto bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="max-w-6xl mx-auto bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden print:hidden">
           <div className="p-5 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
               <h2 className="text-base font-extrabold text-[#08284B]">
@@ -712,6 +946,7 @@ export default function PainelGestao() {
                                   ? "bg-amber-100 text-amber-800"
                                   : "bg-[#00B8C4]/15 text-[#08284B]"
                               }`}
+                            }`}
                             >
                               {c.total_visitas} / {metaVisitas} visitas
                             </span>
