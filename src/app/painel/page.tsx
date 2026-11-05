@@ -5,7 +5,7 @@ import {
   Users, AlertTriangle, Gift, MessageCircle, RefreshCw, ArrowLeft,
   Flame, Sparkles, CheckCircle2, Clock, Megaphone, Zap, Rocket,
   Copy, Check, Camera, Crown, BarChart3, Send, QrCode, Printer,
-  Smartphone, ExternalLink,
+  Smartphone, ExternalLink, Image as ImageIcon, X,
 } from "lucide-react";
 import { supabase } from "../ponto/supabase";
 
@@ -86,6 +86,9 @@ export default function PainelGestao() {
   const [precoPromoInput, setPrecoPromoInput] = useState(MODELOS_CAMPANHA.lancamento.por);
   const [escassezInput, setEscassezInput] = useState(MODELOS_CAMPANHA.lancamento.escassez);
   const [copiado, setCopiado] = useState(false);
+
+  // Estado para a Imagem Anexada no Estúdio de Marketing
+  const [imagemCampanhaUrl, setImagemCampanhaUrl] = useState<string | null>(null);
 
   const [linkCanalInput, setLinkCanalInput] = useState("https://whatsapp.com/channel/0029VaExemploBetuelly");
   const [usarWhatsappDireto, setUsarWhatsappDireto] = useState(true);
@@ -178,6 +181,14 @@ export default function PainelGestao() {
     setEscassezInput(m.escassez);
   };
 
+  const lidarComUploadImagem = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const ficheiro = e.target.files?.[0];
+    if (ficheiro) {
+      const urlLocal = URL.createObjectURL(ficheiro);
+      setImagemCampanhaUrl(urlLocal);
+    }
+  };
+
   const gerarTextoCanal = () => {
     const limpo = whatsappPadaria.replace(/\D/g, "");
     const ddi = limpo.startsWith("55") ? limpo : `55${limpo}`;
@@ -212,7 +223,7 @@ export default function PainelGestao() {
     return linkCanalInput || "https://whatsapp.com";
   };
 
-  const urlImagemQrCode = `https://api.qrserver.com/v1/create-qr-code/?size=1000x1000&margin=10&color=08284B&format=svg&data=${encodeURIComponent(
+  const urlImagemQrCode = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&margin=10&color=08284B&data=${encodeURIComponent(
     obterUrlDestinoQrCode()
   )}`;
 
@@ -297,11 +308,13 @@ export default function PainelGestao() {
       {/* ABA 1: ESTÚDIO DE MARKETING */}
       {abaAtiva === "marketing" && (
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
-          <div className="lg:col-span-7 bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-[#00B8C4]">PASSO 1 • ESCOLHA O GATILHO DE CAMPANHA</span>
-            <h2 className="text-lg font-extrabold text-[#08284B] mb-4">Gerador de Anúncios para Canal do WhatsApp</h2>
+          <div className="lg:col-span-7 bg-white rounded-2xl border border-gray-200 shadow-sm p-6 space-y-5">
+            <div>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#00B8C4]">PASSO 1 • ESCOLHA O GATILHO DE CAMPANHA</span>
+              <h2 className="text-lg font-extrabold text-[#08284B] mt-0.5">Gerador de Anúncios para Canal do WhatsApp</h2>
+            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               {(["lancamento", "relampago", "campanha", "vip", "enquete"] as TipoCampanhaCanal[]).map((tipo) => (
                 <button
                   key={tipo}
@@ -324,24 +337,43 @@ export default function PainelGestao() {
             </div>
 
             <div className="space-y-4 pt-4 border-t border-gray-100">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-[#00B8C4] block">PASSO 2 • PERSONALIZE OS DADOS DO PRODUTO</span>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#00B8C4] block">PASSO 2 • ANEXAR FOTO DO PRODUTO / AÇÃO</span>
+              
+              {/* Seletor de Ficheiro de Imagem */}
+              <div className="flex items-center gap-3">
+                <label className="flex-1 flex items-center justify-center gap-2 border-2 border-dashed border-gray-300 hover:border-[#00B8C4] bg-gray-50 hover:bg-cyan-50/20 p-3.5 rounded-xl cursor-pointer transition text-xs font-bold text-[#08284B]">
+                  <ImageIcon size={18} className="text-[#00B8C4]" />
+                  {imagemCampanhaUrl ? "Alterar foto do anúncio" : "Carregar foto do produto / campanha"}
+                  <input type="file" accept="image/*" onChange={lidarComUploadImagem} className="hidden" />
+                </label>
+                {imagemCampanhaUrl && (
+                  <button
+                    onClick={() => setImagemCampanhaUrl(null)}
+                    className="bg-rose-100 hover:bg-rose-200 text-rose-700 p-3.5 rounded-xl transition text-xs font-bold flex items-center gap-1"
+                    title="Remover imagem"
+                  >
+                    <X size={16} /> Remover
+                  </button>
+                )}
+              </div>
+
               <div>
                 <label className="block text-xs font-bold text-[#08284B] mb-1">Nome do Produto ou Combo em Destaque</label>
-                <input type="text" value={produtoInput} onChange={(e) => setProdutoInput(e.target.value)} className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm" />
+                <input type="text" value={produtoInput} onChange={(e) => setProdutoInput(e.target.value)} className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:border-[#00B8C4]" />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-[#08284B] mb-1">Preço Normal (De)</label>
-                  <input type="text" value={precoNormalInput} onChange={(e) => setPrecoNormalInput(e.target.value)} className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm" />
+                  <input type="text" value={precoNormalInput} onChange={(e) => setPrecoNormalInput(e.target.value)} className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:border-[#00B8C4]" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-[#08284B] mb-1">Preço na Oferta (Por)</label>
-                  <input type="text" value={precoPromoInput} onChange={(e) => setPrecoPromoInput(e.target.value)} className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm font-bold text-emerald-700" />
+                  <input type="text" value={precoPromoInput} onChange={(e) => setPrecoPromoInput(e.target.value)} className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm font-bold text-emerald-700 focus:outline-none focus:border-[#00B8C4]" />
                 </div>
               </div>
               <div>
                 <label className="block text-xs font-bold text-[#08284B] mb-1">Regra de Escassez / Limite de Tempo</label>
-                <input type="text" value={escassezInput} onChange={(e) => setEscassezInput(e.target.value)} className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm" />
+                <input type="text" value={escassezInput} onChange={(e) => setEscassezInput(e.target.value)} className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:border-[#00B8C4]" />
               </div>
             </div>
           </div>
@@ -350,11 +382,21 @@ export default function PainelGestao() {
             <div>
               <div className="flex items-center justify-between mb-4">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-[#00B8C4]">PREVIEW • CANAL DO WHATSAPP</span>
-                <span className="bg-emerald-500/20 text-emerald-300 px-2.5 py-1 rounded-full text-[11px] font-bold">Com Link de Reserva</span>
+                <span className="bg-emerald-500/20 text-emerald-300 px-2.5 py-1 rounded-full text-[11px] font-bold">Com Foto & Link</span>
               </div>
-              <div className="bg-[#0b141a] text-gray-100 p-4 rounded-2xl border border-white/10 text-xs leading-relaxed whitespace-pre-wrap mb-4">
-                {gerarTextoCanal()}
+
+              {/* Caixa simulando o telemóvel com a Imagem e o Texto */}
+              <div className="bg-[#0b141a] text-gray-100 rounded-2xl border border-white/10 overflow-hidden shadow-inner mb-4">
+                {imagemCampanhaUrl && (
+                  <div className="w-full h-48 bg-black relative border-b border-white/10">
+                    <img src={imagemCampanhaUrl} alt="Preview Anúncio" className="w-full h-full object-cover" />
+                  </div>
+                )}
+                <div className="p-4 text-xs leading-relaxed whitespace-pre-wrap font-sans">
+                  {gerarTextoCanal()}
+                </div>
               </div>
+
               <div className="bg-white/10 border border-white/15 rounded-xl p-3.5 mb-6 flex items-start gap-3">
                 <Camera size={18} className="text-[#00B8C4] shrink-0 mt-0.5" />
                 <div>
@@ -363,16 +405,17 @@ export default function PainelGestao() {
                 </div>
               </div>
             </div>
+
             <div className="space-y-2.5">
               <button
                 onClick={() => { navigator.clipboard.writeText(gerarTextoCanal()); setCopiado(true); setTimeout(() => setCopiado(false), 3000); }}
-                className="w-full bg-[#00B8C4] hover:bg-[#00a2ad] text-[#08284B] py-3 px-4 rounded-xl text-xs font-extrabold transition flex items-center justify-center gap-2"
+                className="w-full bg-[#00B8C4] hover:bg-[#00a2ad] text-[#08284B] py-3 px-4 rounded-xl text-xs font-extrabold transition flex items-center justify-center gap-2 shadow-sm"
               >
                 {copiado ? <><Check size={16} /> Texto Copiado! Cole no seu Canal</> : <><Copy size={16} /> 1. Copiar Anúncio Pronto</>}
               </button>
               <button
                 onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(gerarTextoCanal())}`, "_blank")}
-                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 px-4 rounded-xl text-xs font-extrabold transition flex items-center justify-center gap-2"
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 px-4 rounded-xl text-xs font-extrabold transition flex items-center justify-center gap-2 shadow-sm"
               >
                 <Send size={15} /> 2. Abrir WhatsApp para Publicar no Canal / Status
               </button>
@@ -388,11 +431,11 @@ export default function PainelGestao() {
             <span className="text-[11px] font-bold uppercase tracking-wider text-[#00B8C4]">CAPTAÇÃO NO CAIXA • DISPLAY DE BALCÃO</span>
             <h2 className="text-lg font-extrabold text-[#08284B]">Configurar Placa QR Code do Canal VIP</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              <button type="button" onClick={() => setUsarWhatsappDireto(true)} className={`p-3 rounded-xl border text-left text-xs ${usarWhatsappDireto ? "border-[#00B8C4] bg-[#00B8C4]/10 font-extrabold text-[#08284B]" : "border-gray-200 text-gray-600"}`}>
+              <button type="button" onClick={() => setUsarWhatsappDireto(true)} className={`p-3 rounded-xl border text-left text-xs transition ${usarWhatsappDireto ? "border-[#00B8C4] bg-[#00B8C4]/10 font-extrabold text-[#08284B]" : "border-gray-200 text-gray-600"}`}>
                 📲 WhatsApp da Padaria
                 <span className="block text-[10px] font-normal text-gray-500 mt-0.5">Abre conversa com pedido de entrada VIP</span>
               </button>
-              <button type="button" onClick={() => setUsarWhatsappDireto(false)} className={`p-3 rounded-xl border text-left text-xs ${!usarWhatsappDireto ? "border-[#00B8C4] bg-[#00B8C4]/10 font-extrabold text-[#08284B]" : "border-gray-200 text-gray-600"}`}>
+              <button type="button" onClick={() => setUsarWhatsappDireto(false)} className={`p-3 rounded-xl border text-left text-xs transition ${!usarWhatsappDireto ? "border-[#00B8C4] bg-[#00B8C4]/10 font-extrabold text-[#08284B]" : "border-gray-200 text-gray-600"}`}>
                 📢 Link Direto do Canal
                 <span className="block text-[10px] font-normal text-gray-500 mt-0.5">Usa o link público do Canal do WhatsApp</span>
               </button>
@@ -400,26 +443,26 @@ export default function PainelGestao() {
             {!usarWhatsappDireto && (
               <div>
                 <label className="block text-xs font-bold text-[#08284B] mb-1">Link do Canal do WhatsApp</label>
-                <input type="text" value={linkCanalInput} onChange={(e) => setLinkCanalInput(e.target.value)} className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm" />
+                <input type="text" value={linkCanalInput} onChange={(e) => setLinkCanalInput(e.target.value)} className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:border-[#00B8C4]" />
               </div>
             )}
             <div>
               <label className="block text-xs font-bold text-[#08284B] mb-1">Título Principal da Placa</label>
-              <input type="text" value={tituloPlacaInput} onChange={(e) => setTituloPlacaInput(e.target.value)} className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm font-bold" />
+              <input type="text" value={tituloPlacaInput} onChange={(e) => setTituloPlacaInput(e.target.value)} className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm font-bold focus:outline-none focus:border-[#00B8C4]" />
             </div>
             <div>
               <label className="block text-xs font-bold text-[#08284B] mb-1">Subtítulo Explicativo</label>
-              <textarea rows={2} value={subtituloPlacaInput} onChange={(e) => setSubtituloPlacaInput(e.target.value)} className="w-full px-3.5 py-2 rounded-xl border border-gray-300 text-sm" />
+              <textarea rows={2} value={subtituloPlacaInput} onChange={(e) => setSubtituloPlacaInput(e.target.value)} className="w-full px-3.5 py-2 rounded-xl border border-gray-300 text-sm focus:outline-none focus:border-[#00B8C4]" />
             </div>
             <div>
               <label className="block text-xs font-bold text-[#08284B] mb-1">🎁 Isca de Balcão (Recompensa Imediata)</label>
-              <input type="text" value={iscaBalcaoInput} onChange={(e) => setIscaBalcaoInput(e.target.value)} className="w-full px-3.5 py-2.5 rounded-xl border border-amber-300 bg-amber-50/40 text-sm font-semibold text-[#08284B]" />
+              <input type="text" value={iscaBalcaoInput} onChange={(e) => setIscaBalcaoInput(e.target.value)} className="w-full px-3.5 py-2.5 rounded-xl border border-amber-300 bg-amber-50/40 text-sm font-semibold text-[#08284B] focus:outline-none focus:border-[#00B8C4]" />
             </div>
             <div className="pt-2 flex flex-col sm:flex-row gap-3">
-              <button onClick={() => window.print()} className="flex-1 bg-[#08284B] hover:bg-[#0d3868] text-white py-3.5 px-5 rounded-xl text-xs font-extrabold flex items-center justify-center gap-2">
+              <button onClick={() => window.print()} className="flex-1 bg-[#08284B] hover:bg-[#0d3868] text-white py-3.5 px-5 rounded-xl text-xs font-extrabold flex items-center justify-center gap-2 transition shadow-sm">
                 <Printer size={16} className="text-[#00B8C4]" /> Imprimir Placa de Balcão (A4 / A5)
               </button>
-              <a href={obterUrlDestinoQrCode()} target="_blank" rel="noreferrer" className="bg-gray-100 hover:bg-gray-200 text-[#08284B] py-3.5 px-4 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5">
+              <a href={obterUrlDestinoQrCode()} target="_blank" rel="noreferrer" className="bg-gray-100 hover:bg-gray-200 text-[#08284B] py-3.5 px-4 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition">
                 <ExternalLink size={15} /> Testar Link
               </a>
             </div>
@@ -492,15 +535,15 @@ export default function PainelGestao() {
                         </td>
                         <td className="py-4 px-4">
                           <div className="flex flex-wrap gap-1.5">
-                            <button onClick={() => dispararWhatsApp(c, "status")} className="bg-emerald-600 text-white px-2.5 py-1.5 rounded-lg text-[11px] font-bold flex items-center gap-1"><MessageCircle size={13} /> Status Clube</button>
-                            <button onClick={() => dispararWhatsApp(c, "fornada")} className="bg-amber-500 text-white px-2.5 py-1.5 rounded-lg text-[11px] font-bold flex items-center gap-1"><Flame size={13} /> Fornada Quente</button>
-                            <button onClick={() => dispararWhatsApp(c, "resgate")} className="bg-rose-600 text-white px-2.5 py-1.5 rounded-lg text-[11px] font-bold flex items-center gap-1"><AlertTriangle size={13} /> Resgatar Sumido</button>
-                            <button onClick={() => dispararWhatsApp(c, "vitrine")} className="bg-[#08284B] text-white px-2.5 py-1.5 rounded-lg text-[11px] font-bold flex items-center gap-1"><Sparkles size={13} /> Queima Vitrine</button>
+                            <button onClick={() => dispararWhatsApp(c, "status")} className="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1.5 rounded-lg text-[11px] font-bold flex items-center gap-1 transition"><MessageCircle size={13} /> Status Clube</button>
+                            <button onClick={() => dispararWhatsApp(c, "fornada")} className="bg-amber-500 hover:bg-amber-600 text-white px-2.5 py-1.5 rounded-lg text-[11px] font-bold flex items-center gap-1 transition"><Flame size={13} /> Fornada Quente</button>
+                            <button onClick={() => dispararWhatsApp(c, "resgate")} className="bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1.5 rounded-lg text-[11px] font-bold flex items-center gap-1 transition"><AlertTriangle size={13} /> Resgatar Sumido</button>
+                            <button onClick={() => dispararWhatsApp(c, "vitrine")} className="bg-[#08284B] hover:bg-[#0d3868] text-white px-2.5 py-1.5 rounded-lg text-[11px] font-bold flex items-center gap-1 transition"><Sparkles size={13} /> Queima Vitrine</button>
                           </div>
                         </td>
                         <td className="py-4 px-4 text-right">
                           {ganhou ? (
-                            <button onClick={() => resgatarBrinde(c)} className="bg-amber-500 text-[#08284B] px-3 py-1.5 rounded-lg text-xs font-extrabold">Entregar Brinde (Zerar)</button>
+                            <button onClick={() => resgatarBrinde(c)} className="bg-amber-500 hover:bg-amber-600 text-[#08284B] px-3 py-1.5 rounded-lg text-xs font-extrabold transition shadow-sm">Entregar Brinde (Zerar)</button>
                           ) : (
                             <span className="text-[11px] text-gray-400">Em acumulação</span>
                           )}
