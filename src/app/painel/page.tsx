@@ -5,7 +5,7 @@ import {
   Users, AlertTriangle, Gift, MessageCircle, RefreshCw, ArrowLeft,
   Flame, Sparkles, CheckCircle2, Clock, Megaphone, Zap, Rocket,
   Copy, Check, Camera, Crown, BarChart3, Send, QrCode, Printer,
-  Smartphone, ExternalLink, Image as ImageIcon, X,
+  Smartphone, ExternalLink, Image as ImageIcon, X, Download,
 } from "lucide-react";
 import { supabase } from "../ponto/supabase";
 
@@ -340,20 +340,31 @@ export default function PainelGestao() {
               <span className="text-[11px] font-bold uppercase tracking-wider text-[#00B8C4] block">PASSO 2 • ANEXAR FOTO DO PRODUTO / AÇÃO</span>
               
               {/* Seletor de Ficheiro de Imagem */}
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 <label className="flex-1 flex items-center justify-center gap-2 border-2 border-dashed border-gray-300 hover:border-[#00B8C4] bg-gray-50 hover:bg-cyan-50/20 p-3.5 rounded-xl cursor-pointer transition text-xs font-bold text-[#08284B]">
                   <ImageIcon size={18} className="text-[#00B8C4]" />
                   {imagemCampanhaUrl ? "Alterar foto do anúncio" : "Carregar foto do produto / campanha"}
                   <input type="file" accept="image/*" onChange={lidarComUploadImagem} className="hidden" />
                 </label>
+
                 {imagemCampanhaUrl && (
-                  <button
-                    onClick={() => setImagemCampanhaUrl(null)}
-                    className="bg-rose-100 hover:bg-rose-200 text-rose-700 p-3.5 rounded-xl transition text-xs font-bold flex items-center gap-1"
-                    title="Remover imagem"
-                  >
-                    <X size={16} /> Remover
-                  </button>
+                  <>
+                    <a
+                      href={imagemCampanhaUrl}
+                      download="anuncio-betuelly.jpg"
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white p-3.5 rounded-xl transition text-xs font-bold flex items-center gap-1.5 shadow-sm"
+                      title="Descarregar imagem para anexar no WhatsApp"
+                    >
+                      <Download size={16} /> Descarregar Foto
+                    </a>
+                    <button
+                      onClick={() => setImagemCampanhaUrl(null)}
+                      className="bg-rose-100 hover:bg-rose-200 text-rose-700 p-3.5 rounded-xl transition text-xs font-bold flex items-center gap-1"
+                      title="Remover imagem"
+                    >
+                      <X size={16} />
+                    </button>
+                  </>
                 )}
               </div>
 
