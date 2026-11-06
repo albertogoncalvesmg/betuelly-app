@@ -1,407 +1,541 @@
+"use client";
+import { TotemBalcaoShowcase } from "./components/TotemBalcaoShowcase";
+import React, { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 import Link from "next/link";
-import {
-  Flame,
-  Users,
-  Cake,
-  ArrowRight,
-  CheckCircle2,
-  QrCode,
-  Sparkles,
-  ChevronDown,
-  HelpCircle,
+import { 
+  QrCode, 
+  CheckCircle2, 
+  Flame, 
+  Sparkles, 
+  Volume2, 
+  VolumeX, 
+  Smartphone, 
+  Award, 
+  RotateCcw, 
+  ArrowRight, 
+  Search, 
+  Loader2, 
+  PhoneCall, 
+  ShieldCheck, 
+  AlertCircle 
 } from "lucide-react";
+import confetti from "canvas-confetti";
+import { supabase } from "@/app/ponto/supabase"; // ou "@/app/lib/supabase"
 
-export default function VitrineBetuelly() {
-  const faqs = [
-    {
-      pergunta: "Preciso trocar o sistema de caixa atual da minha padaria?",
-      resposta:
-        "Não. A implantação do Betuelly Pulse funciona de forma paralela e não interfere no seu ERP ou sistema fiscal atual. O objetivo é somar inteligência, não causar transtornos na sua operação.",
-    },
-    {
-      pergunta: "O registro atrapalha o atendimento no caixa?",
-      resposta:
-        "A experiência foi pensada exatamente para a rotina de alto fluxo do balcão. O cliente apenas aproxima o QR Code ou digita o WhatsApp em um tablet dedicado, um processo que leva segundos e não exige o envolvimento direto do operador de caixa.",
-    },
-    {
-      pergunta: "O sistema identifica se o cliente foi à concorrência?",
-      resposta:
-        "Não. O sistema analisa exclusivamente o histórico de frequência do cliente dentro do seu estabelecimento, sinalizando mudanças de padrão e ausências prolongadas para que você possa agir no momento certo.",
-    },
-    {
-      pergunta: "A Betuelly garante aumento nas minhas vendas?",
-      resposta:
-        "Nenhuma tecnologia séria pode garantir aumento de faturamento sem analisar a sua operação. O que a Betuelly entrega é a organização do relacionamento, a identificação clara de oportunidades e as ferramentas de automação para que as suas ações comerciais tenham o máximo de resultado.",
-    },
-  ];
+interface ClienteSupabase {
+  id: string;
+  padaria_id?: string;
+  telefone: string;
+  nome: string | null;
+  total_visitas: number;
+  status_recorrencia: string | null;
+  ultima_visita_em: string | null;
+}
+
+const PADARIA_PILOTO_ID = "00000000-0000-0000-0000-000000000001";
+const META_CARIMBOS = 10;
+
+export default function PontoTotemBalcaoPage() {
+  const [telefone, setTelefone] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [currentTime, setCurrentTime] = useState("");
+  const [clienteCheckIn, setClienteCheckIn] = useState<ClienteSupabase | null>(null);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [fornadaAtiva, setFornadaAtiva] = useState<{
+    titulo: string;
+    item: string;
+    beneficio: string;
+    ativa: boolean;
+  }>({
+    titulo: "Fornada Quente saindo agora!",
+    item: "Pão de Queijo Canastra Real",
+    beneficio: "+1 Carimbo Bônus no Totem",
+    ativa: true,
+  });
+
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Relógio do Totem
+  useEffect(() => {
+    const updateRelogio = () => {
+      const now = new Date();
+      setCurrentTime(
+        now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
+      );
+    };
+    updateRelogio();
+    const interval = setInterval(updateRelogio, 1000);
+    return () => clearInterval(interval);
+    <TotemBalcaoShowcase />
+  }, []);
+
+  // Foco automático no input ao carregar ou reiniciar
+  useEffect(() => {
+    if (!isSuccess && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isSuccess]);
+
+  // Chime sonoro de sucesso via Web Audio API (nativo, sem dependência de MP3 externo)
+  const tocarSomSucesso = () => {
+    if (!soundEnabled || typeof window === "undefined") return;
+    try {
+      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+
+      const emitirNota = (freq: number, start: number, duration: number) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(freq, ctx.currentTime + start);
+        gain.gain.setValueAtTime(0.001, ctx.currentTime + start);
+        gain.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + start + 0.04);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(ctx.currentTime + start);
+        osc.stop(ctx.currentTime + start + duration);
+      };
+
+      // Acorde alegre de confirmação Betuelly (C5 -> E5 -> G5 -> C6)
+      emitirNota(523.25, 0.0, 0.25);
+      emitirNota(659.25, 0.08, 0.25);
+      emitirNota(783.99, 0.16, 0.35);
+      emitirNota(1046.50, 0.26, 0.55);
+    } catch (e) {
+      console.warn("Áudio prevenido pela política do navegador:", e);
+    }
+  };
+
+  // Disparo de Confetes Betuelly (Cores: Turquesa #00B8C4, Azul #08284B e Dourado)
+  const dispararConfetes = () => {
+    try {
+      confetti({
+        particleCount: 50,
+        spread: 60,
+        origin: { y: 0.6, x: 0.35 },
+        colors: ["#00B8C4", "#08284B", "#FFB703", "#FFFFFF"],
+      });
+      confetti({
+        particleCount: 50,
+        spread: 60,
+        origin: { y: 0.6, x: 0.65 },
+        colors: ["#00B8C4", "#08284B", "#FFB703", "#FFFFFF"],
+      });
+    } catch {
+      // Caso canvas-confetti não esteja disponível
+    }
+  };
+
+  // Formatador de Telefone Brasileiro (DDD + 9 dígitos)
+  const handleTelefoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let valor = e.target.value.replace(/\D/g, "");
+    if (valor.length > 11) valor = valor.slice(0, 11);
+
+    if (valor.length > 6) {
+      valor = `(${valor.slice(0, 2)}) ${valor.slice(2, 7)}-${valor.slice(7)}`;
+    } else if (valor.length > 2) {
+      valor = `(${valor.slice(0, 2)}) ${valor.slice(2)}`;
+    }
+    setTelefone(valor);
+    setErrorMessage(null);
+  };
+
+  // Processamento do Check-in no Supabase
+  const registrarCheckIn = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const telLimpo = telefone.replace(/\D/g, "");
+
+    if (telLimpo.length < 10) {
+      setErrorMessage("Por favor, digite o DDD e o número completo do celular.");
+      return;
+    }
+
+    setLoading(true);
+    setErrorMessage(null);
+
+    try {
+      // 1. Busca se o cliente já existe para esta padaria
+      const { data: clienteExistente, error: searchError } = await supabase
+        .from("clientes")
+        .select("*")
+        .eq("telefone", telLimpo)
+        .eq("padaria_id", PADARIA_PILOTO_ID)
+        .maybeSingle();
+
+      if (searchError) throw searchError;
+
+      const agoraIso = new Date().toISOString();
+      let clienteSalvo: ClienteSupabase;
+
+      if (clienteExistente) {
+        // Atualiza total de visitas e última visita
+        const novoTotal = (clienteExistente.total_visitas || 0) + 1;
+        const { data: atualizado, error: updateError } = await supabase
+          .from("clientes")
+          .update({
+            total_visitas: novoTotal,
+            ultima_visita_em: agoraIso,
+            status_recorrencia: novoTotal >= 5 ? "VIP" : "Ativo",
+          })
+          .eq("id", clienteExistente.id)
+          .select()
+          .single();
+
+        if (updateError) throw updateError;
+        clienteSalvo = atualizado;
+      } else {
+        // Cadastra novo cliente instantaneamente no balcão
+        const { data: novo, error: insertError } = await supabase
+          .from("clientes")
+          .insert({
+            padaria_id: PADARIA_PILOTO_ID,
+            telefone: telLimpo,
+            nome: `Cliente ${telLimpo.slice(-4)}`,
+            total_visitas: 1,
+            status_recorrencia: "Novo",
+            ultima_visita_em: agoraIso,
+          })
+          .select()
+          .single();
+
+        if (insertError) throw insertError;
+        clienteSalvo = novo;
+      }
+
+      setClienteCheckIn(clienteSalvo);
+      setIsSuccess(true);
+      tocarSomSucesso();
+      dispararConfetes();
+
+      // Limpeza do input para o próximo
+      setTelefone("");
+    } catch (err: unknown) {
+      console.error("Erro no check-in:", err);
+      const msg = err instanceof Error ? err.message : "Falha ao registrar check-in.";
+      setErrorMessage(`${msg}. Verifique a conexão com o Supabase.`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Simular leitura de QR Code do celular
+  const simularLeituraQrCode = () => {
+    setTelefone("(31) 99517-2722");
+    setTimeout(() => {
+      registrarCheckIn();
+    }, 200);
+  };
+
+  // Reiniciar estado do totem para o próximo cliente
+  const reiniciarTotem = () => {
+    setIsSuccess(false);
+    setClienteCheckIn(null);
+    setTelefone("");
+    setErrorMessage(null);
+  };
+
+  // Cálculos de carimbos para o cartão de fidelidade
+  const visitas = clienteCheckIn?.total_visitas || 1;
+  const carimbosAtuais = ((visitas - 1) % META_CARIMBOS) + 1;
+  const bateuMeta = carimbosAtuais === META_CARIMBOS;
 
   return (
-    <div className="min-h-screen bg-[#F7F8F6] text-[#1E242B] font-sans antialiased">
-      {/* CABEÇALHO */}
-      <header className="bg-white text-[#08284B] sticky top-0 z-50 border-b border-gray-200 shadow-sm">
-        <div className="max-w-6xl mx-auto px-6 py-3.5 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3.5 group">
-            <img
-              src="/BETUELLY_simbolo.svg"
-              alt="Símbolo Betuelly"
-              width={44}
-              height={44}
-              className="w-11 h-11 object-contain transition-transform group-hover:scale-105"
-            />
-            <div>
-              <span className="font-extrabold tracking-[0.18em] text-xl text-[#08284B] block leading-none">
-                BETUELLY
+    <div className="min-h-screen bg-[#041527] text-slate-100 flex flex-col justify-between p-3 sm:p-6 antialiased select-none font-sans">
+      {/* Barra Superior do Totem Betuelly */}
+      <header className="w-full max-w-5xl mx-auto flex items-center justify-between bg-[#08284B]/90 backdrop-blur-md px-5 py-3 rounded-2xl border border-[#00B8C4]/20 shadow-lg">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#00B8C4] to-[#08284B] flex items-center justify-center text-white font-extrabold shadow-md shadow-[#00B8C4]/25">
+            BP
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="font-extrabold text-base tracking-wide text-white">
+                BETUELLY PULSE
               </span>
-              <span className="text-[11px] text-gray-500 font-medium tracking-tight block mt-1">
-                Tecnologia aplicada à realidade de quem empreende.
+              <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-[#00B8C4]/15 text-[#00B8C4] border border-[#00B8C4]/30">
+                Totem Balcão
               </span>
             </div>
-          </Link>
-
-          <div className="flex items-center gap-3">
-            <Link
-              href="/painel"
-              className="hidden sm:inline-block text-xs md:text-sm text-[#08284B] font-semibold hover:bg-gray-100 px-4 py-2.5 rounded-xl transition whitespace-nowrap"
-            >
-              Painel Demonstrativo
-            </Link>
-            <a
-              href="https://wa.me/5531995172722?text=Ol%C3%A1%20Alberto,%20gostaria%20de%20agendar%20um%20diagn%C3%B3stico%20para%20a%20minha%20padaria"
-              target="_blank"
-              rel="noreferrer"
-              className="text-xs md:text-sm bg-[#08284B] hover:bg-[#0d3562] text-white font-bold px-5 py-2.5 rounded-xl transition shadow-sm flex items-center gap-2 whitespace-nowrap"
-            >
-              <span className="w-2 h-2 rounded-full bg-[#00B8C4]"></span>
-              Agendar Diagnóstico
-            </a>
+            <p className="text-xs text-slate-300">Fidelização & Recorrência no Caixa</p>
           </div>
+        </div>
+
+        {/* Relógio em Tempo Real e Botão de Áudio */}
+        <div className="flex items-center gap-4">
+          <div className="text-right hidden sm:block">
+            <div className="text-lg font-bold font-mono text-[#00B8C4]">{currentTime || "16:45"}</div>
+            <div className="text-[10px] text-slate-400 uppercase tracking-widest">Caixa Ativo</div>
+          </div>
+
+          <button
+            onClick={() => setSoundEnabled(!soundEnabled)}
+            className="p-2.5 rounded-xl bg-[#041527]/80 hover:bg-[#041527] text-slate-300 border border-slate-700 transition-colors cursor-pointer"
+            title={soundEnabled ? "Silenciar Chime" : "Ativar Chime"}
+          >
+            {soundEnabled ? (
+              <Volume2 className="w-4 h-4 text-[#00B8C4]" />
+            ) : (
+              <VolumeX className="w-4 h-4 text-slate-500" />
+            )}
+          </button>
+
+          <Link
+            href="/painel"
+            className="hidden md:flex text-xs font-semibold px-3 py-1.5 rounded-xl bg-[#08284B] hover:bg-[#0d3562] text-slate-300 border border-slate-700 transition-all items-center gap-1.5"
+          >
+            Ir ao Painel
+          </Link>
         </div>
       </header>
 
-      {/* HERO SECTION - PROMESSA AJUSTADA E REALISTA */}
-      <section className="bg-[#08284B] text-white py-14 md:py-20 px-6 relative overflow-hidden">
-        <div className="max-w-6xl mx-auto grid lg:grid-cols-12 gap-10 items-center">
-          <div className="lg:col-span-6">
-            <span className="inline-flex items-center gap-1.5 bg-[#00B8C4]/20 border border-[#00B8C4]/40 text-[#00B8C4] text-xs font-bold px-3.5 py-1.5 rounded-full mb-5">
-              <Sparkles size={14} /> TECNOLOGIA E RELACIONAMENTO PARA PADARIAS
-            </span>
-            <h1 className="text-3xl md:text-5xl font-extrabold leading-tight tracking-tight mb-6">
-              Sua vitrine atrai clientes.{" "}
-              <span className="text-[#00B8C4]">
-                A Betuelly ajuda a trazê-los de volta.
+      {/* Banner de Notificação "Fornada Quente" */}
+      {fornadaAtiva.ativa && (
+        <div className="w-full max-w-5xl mx-auto mt-3 bg-gradient-to-r from-amber-500/20 via-orange-500/15 to-transparent border border-amber-500/30 px-5 py-2.5 rounded-2xl flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <Flame className="w-5 h-5 text-amber-400 animate-bounce" />
+              <div className="absolute inset-0 blur-sm bg-amber-400/40 rounded-full" />
+            </div>
+            <div>
+              <span className="font-bold text-amber-300 text-sm">{fornadaAtiva.titulo}</span>
+              <span className="text-xs text-slate-300 ml-2 hidden sm:inline">
+                {fornadaAtiva.item} • {fornadaAtiva.beneficio}
               </span>
-            </h1>
-            <p className="text-gray-300 text-base md:text-lg mb-8 leading-relaxed">
-              Sua padaria já trabalha para conquistar clientes todos os dias. Nós
-              ajudamos a organizar o relacionamento com eles, identificar
-              oportunidades de retorno e transformar informações do balcão em
-              ações comerciais inteligentes.
-            </p>
-
-            <div className="flex flex-col sm:flex-row gap-3.5">
-              <a
-                href="https://wa.me/5531995172722?text=Ol%C3%A1%20Alberto,%20quero%20agendar%20o%20diagn%C3%B3stico%20gratuito"
-                target="_blank"
-                rel="noreferrer"
-                className="bg-[#00B8C4] hover:bg-[#00a3ad] text-[#08284B] font-extrabold px-6 py-4 rounded-xl flex items-center justify-center gap-2 text-sm md:text-base shadow-lg transition whitespace-nowrap"
-              >
-                Solicitar Análise da Minha Padaria{" "}
-                <ArrowRight size={18} className="shrink-0" />
-              </a>
-              <Link
-                href="/ponto"
-                className="border border-white/30 hover:bg-white/10 text-white font-semibold px-6 py-4 rounded-xl flex items-center justify-center gap-2 text-sm md:text-base transition whitespace-nowrap"
-              >
-                Ver Simulador do Balcão
-              </Link>
             </div>
           </div>
+          <span className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-amber-500/25 text-amber-200 border border-amber-500/40">
+            Fornada Ativa
+          </span>
+        </div>
+      )}
 
-          <div className="lg:col-span-6">
-            <div className="relative rounded-3xl overflow-hidden border-2 border-[#00B8C4]/40 shadow-2xl bg-[#0d3562]">
-              {/* IMAGEM 1: FOTO DA CAPA / BALCÃO */}
-              <img
-                src="/padaria-vitrine.jpg"
-                alt="Padaria movimentada"
-                width={1400}
-                height={900}
-                fetchPriority="high"
-                decoding="async"
-                className="w-full h-[340px] md:h-[420px] object-cover object-center brightness-105 contrast-[1.03]"
-              />
-              <div className="absolute bottom-4 left-4 right-4 bg-[#08284B]/95 backdrop-blur-md border border-white/15 p-4 rounded-2xl flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="bg-white p-1.5 rounded-xl shrink-0">
-                    <img
-                      src="/BETUELLY_simbolo.svg"
-                      alt="Betuelly"
-                      width={32}
-                      height={32}
-                      className="w-8 h-8 object-contain"
-                    />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold text-[#00B8C4] uppercase">
-                      PAINEL DEMONSTRATIVO (DADOS SIMULADOS)
-                    </p>
-                    <p className="text-xs md:text-sm text-white font-semibold">
-                      184 registros no exemplo • 37 alertas de retorno
-                    </p>
+      {/* Área Central: Superfície do Tablet */}
+      <main className="w-full max-w-5xl mx-auto my-auto py-6">
+        <div className="relative rounded-3xl overflow-hidden bg-gradient-to-b from-[#08284B]/80 via-[#041527]/90 to-[#041527] border-2 border-[#00B8C4]/30 shadow-2xl p-6 sm:p-10 min-h-[520px] flex flex-col justify-center">
+          
+          {/* Efeito Glow / Iluminação de Fundo */}
+          <div className="absolute top-10 left-10 w-72 h-72 bg-[#00B8C4]/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute bottom-10 right-10 w-80 h-80 bg-[#08284B]/40 rounded-full blur-3xl pointer-events-none" />
+
+          {!isSuccess ? (
+            /* ESTADO 1: AGUARDANDO CHECK-IN (QR CODE OU TELEFONE) */
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center max-w-4xl mx-auto w-full relative z-10">
+              
+              {/* Coluna Esquerda: Mirante do QR Code */}
+              <div className="md:col-span-6 flex flex-col items-center text-center">
+                <div className="relative p-6 rounded-3xl bg-[#08284B]/60 border border-[#00B8C4]/30 shadow-xl group">
+                  {/* Marcadores dos 4 Cantos */}
+                  <div className="absolute top-3 left-3 w-5 h-5 border-t-2 border-l-2 border-[#00B8C4]" />
+                  <div className="absolute top-3 right-3 w-5 h-5 border-t-2 border-r-2 border-[#00B8C4]" />
+                  <div className="absolute bottom-3 left-3 w-5 h-5 border-b-2 border-l-2 border-[#00B8C4]" />
+                  <div className="absolute bottom-3 right-3 w-5 h-5 border-b-2 border-r-2 border-[#00B8C4]" />
+
+                  <div className="w-52 h-52 sm:w-60 sm:h-60 rounded-2xl bg-[#041527] flex flex-col items-center justify-center p-4 border border-[#00B8C4]/20">
+                    <div className="w-20 h-20 rounded-2xl bg-[#00B8C4]/10 border border-[#00B8C4]/40 flex items-center justify-center mb-3">
+                      <QrCode className="w-12 h-12 text-[#00B8C4]" />
+                    </div>
+                    <span className="text-white font-bold text-sm tracking-wide">
+                      Aponte seu QR Code
+                    </span>
+                    <span className="text-[11px] text-slate-400 mt-1 max-w-[180px]">
+                      Aproxime a tela do seu celular para pontuar
+                    </span>
                   </div>
                 </div>
-                <Link
-                  href="/painel"
-                  className="bg-[#00B8C4] text-[#08284B] text-xs font-extrabold px-3.5 py-2.5 rounded-lg shrink-0 hover:opacity-90 whitespace-nowrap"
+
+                <button
+                  type="button"
+                  onClick={simularLeituraQrCode}
+                  className="mt-4 text-xs font-semibold text-[#00B8C4] hover:text-[#00B8C4]/80 flex items-center gap-1.5 cursor-pointer py-1 px-3 rounded-lg hover:bg-[#08284B]/50 transition-colors"
                 >
-                  Ver Painel →
-                </Link>
+                  <Smartphone className="w-3.5 h-3.5" />
+                  Simular Leitura do Celular
+                </button>
+              </div>
+
+              {/* Coluna Direita: Digitação de Telefone & Vantagens */}
+              <div className="md:col-span-6 space-y-5">
+                <div className="bg-[#08284B]/70 border border-[#00B8C4]/30 rounded-2xl p-6 shadow-lg">
+                  <span className="text-xs font-bold text-[#00B8C4] uppercase tracking-wider block mb-1">
+                    Ou digite seu celular no balcão
+                  </span>
+                  <p className="text-xs text-slate-300 mb-4">
+                    Insira seu DDD + Celular para pontuar na visita de hoje:
+                  </p>
+
+                  <form onSubmit={registrarCheckIn} className="space-y-3">
+                    <div>
+                      <input
+                        ref={inputRef}
+                        type="tel"
+                        placeholder="(31) 99517-2722"
+                        value={telefone}
+                        onChange={handleTelefoneChange}
+                        disabled={loading}
+                        className="w-full bg-[#041527] border-2 border-[#00B8C4]/40 rounded-xl px-4 py-3.5 text-white placeholder-slate-500 text-lg font-mono tracking-wide focus:outline-none focus:border-[#00B8C4] focus:ring-2 focus:ring-[#00B8C4]/20 transition-all"
+                      />
+                    </div>
+
+                    {errorMessage && (
+                      <div className="p-3 rounded-xl bg-rose-950/60 border border-rose-500/40 text-rose-200 text-xs flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                        <span>{errorMessage}</span>
+                      </div>
+                    )}
+
+                    <button
+                      type="submit"
+                      disabled={loading || telefone.replace(/\D/g, "").length < 10}
+                      className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#00B8C4] to-[#08284B] hover:brightness-110 text-white text-sm font-extrabold shadow-lg shadow-[#00B8C4]/30 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      {loading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>Registrando Visita...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>Confirmar Check-in</span>
+                          <ArrowRight className="w-4 h-4" />
+                        </>
+                      )}
+                    </button>
+                  </form>
+                </div>
+
+                {/* Resumo de Benefícios */}
+                <div className="bg-[#041527]/60 border border-slate-700/60 rounded-2xl p-4 text-xs text-slate-300 space-y-2">
+                  <div className="flex items-center gap-2 font-bold text-white">
+                    <Award className="w-4 h-4 text-amber-400" />
+                    Regras do Clube Fidelidade
+                  </div>
+                  <ul className="space-y-1.5 text-slate-400">
+                    <li className="flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#00B8C4]" />
+                      10 carimbos = 1 Fornada de Pão de Queijo ou Café Especial
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#00B8C4]" />
+                      Receba avisos instantâneos de Fornada Quente no WhatsApp
+                    </li>
+                  </ul>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
+          ) : (
+            /* ESTADO 2: SUCESSO DO CHECK-IN & CARTÃO DE CARIMBOS */
+            <div className="max-w-2xl mx-auto w-full text-center py-2 relative z-10 animate-in fade-in zoom-in-95 duration-300">
+              
+              {/* Ícone de Sucesso Iluminado */}
+              <div className="relative inline-flex items-center justify-center mb-4">
+                <div className="absolute inset-0 rounded-full bg-[#00B8C4]/25 blur-xl animate-pulse" />
+                <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-[#00B8C4] to-[#08284B] flex items-center justify-center text-white shadow-xl shadow-[#00B8C4]/40 relative border-2 border-white/20">
+                  <CheckCircle2 className="w-14 h-14 stroke-[2.5]" />
+                </div>
+              </div>
 
-      {/* SEÇÃO 2 - O PROBLEMA (FOCO NO EMPRESÁRIO) */}
-      <section className="py-16 px-6 bg-white border-b border-gray-200">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-2xl md:text-4xl font-extrabold text-[#08284B] mb-6">
-            O movimento acontece todos os dias. Mas quanto você realmente sabe
-            sobre ele?
-          </h2>
-          <p className="text-gray-600 text-base md:text-lg mb-12">
-            Muitas padarias têm dificuldade para entender quem são seus clientes
-            habituais, com que frequência retornam e quais ações podem estimular
-            novas compras sem prejudicar a margem.
-          </p>
-
-          <div className="grid md:grid-cols-3 gap-8 text-left">
-            <div className="p-6 bg-[#F7F8F6] rounded-2xl border border-gray-200">
-              <h3 className="font-bold text-[#08284B] mb-2">
-                Clientes Não Identificados
-              </h3>
-              <p className="text-sm text-gray-600">
-                É difícil reconhecer padrões de frequência quando as informações
-                do balcão não são registradas de forma estruturada.
-              </p>
-            </div>
-            <div className="p-6 bg-[#F7F8F6] rounded-2xl border border-gray-200">
-              <h3 className="font-bold text-[#08284B] mb-2">
-                Oportunidades Perdidas
-              </h3>
-              <p className="text-sm text-gray-600">
-                Sem acompanhar o histórico, fica quase impossível identificar
-                quando um bom cliente está deixando de frequentar a casa.
-              </p>
-            </div>
-            <div className="p-6 bg-[#F7F8F6] rounded-2xl border border-gray-200">
-              <h3 className="font-bold text-[#08284B] mb-2">
-                Ações Sem Medição
-              </h3>
-              <p className="text-sm text-gray-600">
-                Fazer promoções é fácil; o difícil é acompanhar com exatidão o
-                retorno financeiro que cada campanha gerou no caixa.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* SEÇÃO 3 - COMO FUNCIONA NO CAIXA */}
-      <section className="py-16 md:py-24 px-6 max-w-6xl mx-auto">
-        <div className="grid md:grid-cols-2 gap-12 items-center bg-white p-6 md:p-10 rounded-3xl shadow-sm border border-gray-200">
-          <div className="rounded-2xl overflow-hidden border border-gray-200 shadow-md">
-            {/* IMAGEM 2: FOTO DO LEITOR NO BALCÃO */}
-            <img
-              src="/padaria-scanner.jpg"
-              alt="Cliente registrando presença no leitor Betuelly"
-              width={1200}
-              height={800}
-              decoding="async"
-              className="w-full h-[320px] md:h-[380px] object-cover object-center contrast-[1.02]"
-            />
-          </div>
-
-          <div>
-            <div className="inline-flex items-center gap-2 bg-[#08284B] text-[#00B8C4] text-xs font-bold px-3.5 py-1.5 rounded-full mb-4">
-              <QrCode size={15} /> PENSADO PARA A ROTINA DO CAIXA
-            </div>
-            <h2 className="text-2xl md:text-4xl font-extrabold text-[#08284B] mb-4 leading-tight">
-              Registro simples. Resultados organizados.
-            </h2>
-            <p className="text-gray-600 text-sm md:text-base leading-relaxed mb-6">
-              A implantação precisa respeitar o ritmo da sua padaria e o
-              trabalho da equipe. Construímos um fluxo de identificação
-              otimizado para não causar gargalos no atendimento de pico.
-            </p>
-
-            <ul className="space-y-4 text-sm text-gray-700 mb-8">
-              <li className="flex items-start gap-3">
-                <CheckCircle2
-                  size={20}
-                  className="text-[#00B8C4] shrink-0 mt-0.5"
-                />
-                <span>
-                  <strong>Identificação Ágil:</strong> O cliente interage com o
-                  leitor QR Code ou informa o número no terminal dedicado,
-                  mantendo o fluxo do caixa livre.
+              <div className="space-y-1 mb-6">
+                <span className="text-xs font-bold tracking-widest text-[#00B8C4] uppercase">
+                  Check-in Confirmado com Sucesso!
                 </span>
-              </li>
-              <li className="flex items-start gap-3">
-                <CheckCircle2
-                  size={20}
-                  className="text-[#00B8C4] shrink-0 mt-0.5"
-                />
-                <span>
-                  <strong>Histórico Inteligente:</strong> O sistema sinaliza
-                  mudanças relevantes de frequência para que você avalie quando
-                  uma ação comercial faz sentido.
-                </span>
-              </li>
-            </ul>
+                <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+                  {clienteCheckIn?.nome || "Cliente Especial"}
+                </h2>
+                <p className="text-sm text-slate-300">
+                  Sua visita foi registrada. Total acumulado:{" "}
+                  <strong className="text-[#00B8C4] font-bold">
+                    {clienteCheckIn?.total_visitas} visita(s)
+                  </strong>
+                </p>
+              </div>
 
-            <Link
-              href="/ponto"
-              className="inline-flex bg-[#08284B] hover:bg-[#0d3562] text-white font-bold px-6 py-3.5 rounded-xl text-sm items-center gap-2 transition"
-            >
-              Testar Fluxo de Registro <ArrowRight size={16} />
-            </Link>
-          </div>
-        </div>
-      </section>
+              {/* Cartão de 10 Carimbos Digital */}
+              <div className="bg-[#08284B]/80 border border-[#00B8C4]/30 rounded-2xl p-6 mb-6 text-left shadow-xl">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Award className="w-4 h-4 text-amber-400" />
+                    <span className="font-bold text-sm text-white">
+                      Cartão Fidelidade • {clienteCheckIn?.status_recorrencia || "Ativo"}
+                    </span>
+                  </div>
+                  <span className="text-xs font-extrabold text-[#00B8C4] bg-[#041527] px-3 py-1 rounded-lg border border-[#00B8C4]/30">
+                    {carimbosAtuais} de {META_CARIMBOS} Carimbos
+                  </span>
+                </div>
 
-      {/* SEÇÃO 4 - OS BENEFÍCIOS REFINADOS */}
-      <section className="py-10 px-6 max-w-6xl mx-auto">
-        <div className="text-center max-w-3xl mx-auto mb-12">
-          <h2 className="text-2xl md:text-4xl font-extrabold text-[#08284B] mb-4">
-            A tecnologia precisa fazer sentido no seu negócio
-          </h2>
-          <p className="text-gray-600">
-            Três pilares estratégicos desenvolvidos para a realidade comercial
-            de padarias.
-          </p>
-        </div>
+                {/* Grid dos 10 Carimbos */}
+                <div className="grid grid-cols-5 sm:grid-cols-10 gap-2 mb-3">
+                  {Array.from({ length: META_CARIMBOS }).map((_, idx) => {
+                    const numero = idx + 1;
+                    const preenchido = numero <= carimbosAtuais;
+                    const acabouDeGanhar = numero === carimbosAtuais;
 
-        <div className="grid md:grid-cols-3 gap-8">
-          <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-200">
-            <div className="w-12 h-12 rounded-xl bg-[#08284B] text-[#00B8C4] flex items-center justify-center mb-6">
-              <Users size={24} />
+                    return (
+                      <div
+                        key={idx}
+                        className={`h-12 rounded-xl flex items-center justify-center border transition-all text-sm font-bold ${
+                          preenchido
+                            ? acabouDeGanhar
+                              ? "bg-gradient-to-tr from-[#00B8C4] to-[#08284B] border-white text-white scale-105 shadow-md shadow-[#00B8C4]/40"
+                              : "bg-[#00B8C4]/20 border-[#00B8C4]/60 text-[#00B8C4]"
+                            : "bg-[#041527]/70 border-slate-700 text-slate-600"
+                        }`}
+                      >
+                        {preenchido ? "🧀" : numero}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="flex items-center justify-between text-xs text-slate-300 pt-3 border-t border-slate-700">
+                  {bateuMeta ? (
+                    <span className="text-amber-300 font-bold flex items-center gap-1.5">
+                      <Sparkles className="w-4 h-4" />
+                      Parabéns! Você completou a cartela e ganhou o brinde da padaria!
+                    </span>
+                  ) : (
+                    <span>
+                      Faltam apenas{" "}
+                      <strong className="text-[#00B8C4]">
+                        {META_CARIMBOS - carimbosAtuais} visita(s)
+                      </strong>{" "}
+                      para o próximo brinde!
+                    </span>
+                  )}
+                  <span className="text-[11px] text-slate-400 font-mono">
+                    ID: {clienteCheckIn?.id?.slice(0, 8)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Botão de Finalizar & Atender Próximo */}
+              <div className="flex justify-center">
+                <button
+                  type="button"
+                  onClick={reiniciarTotem}
+                  className="py-3 px-8 rounded-xl bg-gradient-to-r from-[#00B8C4] to-[#08284B] hover:brightness-110 text-white font-bold text-sm shadow-lg shadow-[#00B8C4]/20 transition-all flex items-center gap-2 cursor-pointer"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  Próximo Cliente do Caixa
+                </button>
+              </div>
             </div>
-            <h3 className="text-xl font-bold text-[#08284B] mb-3">
-              1. Inteligência de Relacionamento
-            </h3>
-            <p className="text-gray-600 text-sm leading-relaxed">
-              Organize os registros dos seus clientes, observe padrões de
-              frequência e avalie oportunidades para estruturar ações de
-              fidelização mais assertivas.
-            </p>
-          </div>
-
-          <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-200">
-            <div className="w-12 h-12 rounded-xl bg-[#08284B] text-[#00B8C4] flex items-center justify-center mb-6">
-              <Flame size={24} />
-            </div>
-            <h3 className="text-xl font-bold text-[#08284B] mb-3">
-              2. Apoio à Gestão de Produção
-            </h3>
-            <p className="text-gray-600 text-sm leading-relaxed">
-              Utilize nossa ferramenta de campanhas segmentadas para avisar
-              clientes sobre fornadas especiais e criar ações que ajudem a
-              reduzir sobras no fim do dia.
-            </p>
-          </div>
-
-          <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-200">
-            <div className="w-12 h-12 rounded-xl bg-[#08284B] text-[#00B8C4] flex items-center justify-center mb-6">
-              <Cake size={24} />
-            </div>
-            <h3 className="text-xl font-bold text-[#08284B] mb-3">
-              3. Organização de Encomendas
-            </h3>
-            <p className="text-gray-600 text-sm leading-relaxed">
-              Um catálogo express que facilita o pedido de kits festa e coffee
-              breaks pelo cliente, organizando as informações e mantendo um
-              histórico de datas comemorativas.
-            </p>
-          </div>
+          )}
         </div>
-      </section>
+      </main>
 
-      {/* SEÇÃO 5 - FAQ */}
-      <section className="py-16 px-6 max-w-4xl mx-auto">
-        <div className="flex items-center justify-center gap-2 mb-8">
-          <HelpCircle size={28} className="text-[#00B8C4]" />
-          <h2 className="text-2xl md:text-3xl font-extrabold text-[#08284B]">
-            Perguntas Frequentes
-          </h2>
+      {/* Rodapé do Totem */}
+      <footer className="w-full max-w-5xl mx-auto flex items-center justify-between text-xs text-slate-400 px-4 py-2">
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span>Totem Sincronizado com Supabase • Padaria Piloto</span>
         </div>
-
-        <div className="space-y-4">
-          {faqs.map((faq, idx) => (
-            <div
-              key={idx}
-              className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm"
-            >
-              <h3 className="text-base font-bold text-[#08284B] mb-2 flex items-start gap-2">
-                <ChevronDown
-                  size={20}
-                  className="text-[#00B8C4] shrink-0 mt-0.5"
-                />
-                {faq.pergunta}
-              </h3>
-              <p className="text-sm text-gray-600 pl-7 leading-relaxed">
-                {faq.resposta}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* CALL TO ACTION FINAL REVISADO */}
-      <section className="bg-[#08284B] text-white py-16 px-6 text-center">
-        <div className="max-w-3xl mx-auto">
-          <h2 className="text-3xl font-extrabold mb-4">
-            Sua padaria pode conhecer melhor seus clientes.
-          </h2>
-          <p className="text-gray-300 mb-8 text-lg">
-            Vamos conversar sobre a rotina do seu negócio, entender os seus
-            desafios no balcão e avaliar como as soluções da Betuelly podem
-            ajudar na sua operação.
-          </p>
-          <a
-            href="https://wa.me/5531995172722?text=Ol%C3%A1%20Alberto,%20quero%20agendar%20uma%20conversa%20para%20avaliar%20a%20implanta%C3%A7%C3%A3o%20da%20Betuelly"
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex bg-[#00B8C4] hover:bg-[#00a3ad] text-[#08284B] font-extrabold px-8 py-4 rounded-xl shadow-lg transition text-lg"
-          >
-            Agendar Conversa de Avaliação
-          </a>
-        </div>
-      </section>
-
-      {/* RODAPÉ OFICIAL */}
-      <footer className="bg-[#041527] text-white py-10 px-6">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-3">
-            <img
-              src="/BETUELLY_simbolo.svg"
-              alt="Símbolo Betuelly"
-              width={32}
-              height={32}
-              className="w-8 h-8 opacity-80"
-            />
-            <div>
-              <span className="font-extrabold tracking-[0.18em] text-base block text-gray-300">
-                BETUELLY
-              </span>
-              <span className="text-xs text-gray-500">
-                Crescimento comercial para negócios reais.
-              </span>
-            </div>
-          </div>
-          <p className="text-xs text-gray-500">
-            © 2026 Betuelly Tecnologia • Grande Belo Horizonte, MG
-          </p>
-        </div>
+        <span>Betuelly Pulse OS</span>
       </footer>
     </div>
   );
