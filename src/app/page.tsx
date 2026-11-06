@@ -9,6 +9,7 @@ import {
   Sparkles,
   ChevronDown,
   HelpCircle,
+  Tablet,
 } from "lucide-react";
 
 export default function VitrineBetuelly() {
@@ -409,6 +410,23 @@ export default function VitrineBetuelly() {
           </p>
         </div>
       </footer>
+      {/* BOTÃO FLUTUANTE DE DEMONSTRAÇÃO AO VIVO (BETUELLY PULSE) */}
+      <aside aria-label="Acesso à demonstração interativa" className="fixed bottom-6 right-6 z-50 animate-bounce">
+        <Link
+          href="/demo"
+          className="group relative flex items-center gap-2.5 px-5 py-3.5 rounded-full bg-gradient-to-r from-[#00B8C4] via-teal-300 to-[#00B8C4] text-slate-950 font-black text-xs uppercase tracking-wider shadow-2xl shadow-[#00B8C4]/50 hover:shadow-[#00B8C4]/80 transition-all duration-300 transform hover:scale-105 border-2 border-white/60"
+        >
+          {/* Efeito de Ping / Brilho Luminoso */}
+          <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-amber-500"></span>
+          </span>
+
+          <Tablet className="w-4 h-4 text-slate-950 stroke-[2.5]" />
+          <span>Testar Totem ao Vivo</span>
+          <Sparkles className="w-3.5 h-3.5 text-slate-950" />
+        </Link>
+      </aside>
     </div>
   );
 }
